@@ -8,27 +8,21 @@ macro_rules! w {
 }
 
 macro_rules! get_zsh_arg_conflicts {
-    ($app:expr, $arg:ident, $msg:ident) => {
-        if let Some(ref conf_vec) = $arg.blacklist {
-            let mut v = vec![];
+    ($app:expr, $arg:ident) => {{
+        let mut v = vec![];
 
-            for arg_name in conf_vec {
-                let arg = find!($app, arg_name).expect($msg);
-
-                if let Some(s) = arg.short {
-                    v.push(format!("-{}", s));
-                }
-
-                if let Some(l) = arg.long {
-                    v.push(format!("--{}", l));
-                }
+        for arg in $app.view().conflicts_with($arg) {
+            if let Some(s) = arg.short {
+                v.push(format!("-{}", s));
             }
 
-            v.join(" ")
-        } else {
-            String::new()
+            if let Some(l) = arg.long {
+                v.push(format!("--{}", l));
+            }
         }
-    };
+
+        v.join(" ")
+    }};
 }
 
 #[cfg(feature = "debug")]
@@ -76,7 +70,7 @@ macro_rules! find {
         $what!($app).find(|a| &a.name == $name)
     };
     ($app:expr, $name:expr) => {
-        $app.args.args.iter().find(|a| {
+        $app.args.args.iter().find_map(|a| {
             if let Some(v) = a.index {
                 &v == $name
             } else {

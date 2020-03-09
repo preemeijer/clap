@@ -695,7 +695,8 @@ impl<'b, 'c, 'd, 'w> Help<'b, 'c, 'd, 'w> {
                     self.writer.write_all(b"\n\n")?;
                 }
                 self.color(Format::Warning("FLAGS:\n"))?;
-                let flags_v: Vec<_> = flags!(self.parser.app).collect();
+                let view = self.parser.app.view();
+                let flags_v: Vec<_> = view.flags().collect();
                 self.write_args(&*flags_v)?;
                 first = false;
             }

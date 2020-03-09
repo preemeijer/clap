@@ -360,8 +360,8 @@ fn write_opts_of(p: &App) -> String {
     for o in opts!(p) {
         debugln!("Zsh::write_opts_of:iter: o={}", o.name);
 
-        let help = o.help.map_or(String::new(), escape_help);
-        let mut conflicts = get_zsh_arg_conflicts!(p, o, INTERNAL_ERROR_MSG);
+        let help = o.view().help().map_or(String::new(), escape_help);
+        let mut conflicts = get_zsh_arg_conflicts!(p, o);
 
         conflicts = if conflicts.is_empty() {
             String::new()
@@ -432,7 +432,7 @@ fn write_flags_of(p: &App) -> String {
     for f in Zsh::flags(p) {
         debugln!("Zsh::write_flags_of:iter: f={}", f.name);
 
-        let help = f.help.map_or(String::new(), escape_help);
+        let help = f.view().help().map_or(String::new(), escape_help);
         let mut conflicts = get_zsh_arg_conflicts!(p, f, INTERNAL_ERROR_MSG);
 
         conflicts = if conflicts.is_empty() {
@@ -496,10 +496,11 @@ fn write_positionals_of(p: &App) -> String {
         let a = format!(
             "'{optional}:{name}{help}:{action}' \\",
             optional = optional,
-            name = arg.name,
+            name = arg.view().name(),
             help = arg
-                .help
-                .map_or("".to_owned(), |v| " -- ".to_owned() + v)
+                .view()
+                .help()
+                .map_or(String::new(), |v| " -- ".to_owned() + v)
                 .replace("[", "\\[")
                 .replace("]", "\\]")
                 .replace(":", "\\:"),

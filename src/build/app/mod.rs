@@ -1,5 +1,8 @@
 mod settings;
-pub use self::settings::{AppFlags, AppSettings};
+pub mod view;
+pub(crate) use self::settings::AppFlags;
+pub use self::settings::AppSettings;
+pub use self::view::AppView;
 
 // Std
 use std::collections::HashMap;
@@ -1392,6 +1395,11 @@ impl<'b> App<'b> {
 
         self._do_parse(&mut it)
     }
+
+    /// Build an [`AppView`] instance corresponding to `self`.
+    pub fn view<'app>(&'app self) -> AppView<'app, 'b> {
+        AppView::from_ref(self)
+    }
 }
 
 // Internally used only
@@ -1429,7 +1437,7 @@ impl<'b> App<'b> {
     }
 
     #[allow(clippy::debug_assert_with_mut_call)]
-    // used in clap_generate (https://github.com/clap-rs/clap_generate)
+    // PUB_HIDDEN: used in clap_generate
     #[doc(hidden)]
     pub fn _build(&mut self) {
         debugln!("App::_build;");
@@ -1503,6 +1511,7 @@ impl<'b> App<'b> {
                 panic!(abort_message);
             }
         }
+
         for sub_app in &app.subcommands {
             Self::_panic_on_missing_help(&sub_app, help_required_globally);
         }
@@ -1536,7 +1545,7 @@ impl<'b> App<'b> {
         true
     }
 
-    pub fn _propagate(&mut self, prop: Propagation) {
+    pub(crate) fn _propagate(&mut self, prop: Propagation) {
         macro_rules! propagate_subcmd {
             ($_self:expr, $sc:expr) => {{
                 // We have to create a new scope in order to tell rustc the borrow of `sc` is
@@ -1605,6 +1614,7 @@ impl<'b> App<'b> {
 
             self.args.push(help);
         }
+
         if !(self
             .args
             .args
@@ -1622,6 +1632,7 @@ impl<'b> App<'b> {
 
             self.args.push(version);
         }
+
         if self.has_subcommands()
             && !self.is_set(AppSettings::DisableHelpSubcommand)
             && !subcommands!(self).any(|s| s.id == HELP_HASH)
@@ -1719,7 +1730,7 @@ impl<'b> App<'b> {
         true
     }
 
-    // used in clap_generate (https://github.com/clap-rs/clap_generate)
+    // PUB_HIDDEN: used in clap_generate
     #[doc(hidden)]
     pub fn _build_bin_names(&mut self) {
         debugln!("App::_build_bin_names;");
@@ -1854,7 +1865,8 @@ impl<'b> App<'b> {
     }
 
     pub fn has_flags(&self) -> bool {
-        flags!(self).count() > 0
+        let view = self.view().flags();
+        view.count() > 0
     }
 
     pub fn has_positionals(&self) -> bool {
@@ -1866,7 +1878,8 @@ impl<'b> App<'b> {
     }
 
     pub fn has_visible_flags(&self) -> bool {
-        flags!(self).any(|o| !o.is_set(ArgSettings::Hidden))
+        let view = self.view();
+        view.flags().any(|o| !o.is_set(ArgSettings::Hidden))
     }
 
     pub fn has_visible_positionals(&self) -> bool {

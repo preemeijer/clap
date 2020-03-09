@@ -1,5 +1,9 @@
 mod settings;
-pub use self::settings::{ArgFlags, ArgSettings};
+pub mod view;
+
+pub(crate) use self::settings::ArgFlags;
+pub use self::settings::ArgSettings;
+pub use self::view::ArgView;
 
 // Std
 use std::borrow::Cow;
@@ -54,18 +58,13 @@ type Id = u64;
 #[allow(missing_debug_implementations)]
 #[derive(Default, Clone)]
 pub struct Arg<'help> {
+    pub(crate) id: Id,
+    pub(crate) name: &'help str,
+    pub(crate) help: Option<&'help str>,
+    pub(crate) long_help: Option<&'help str>,
+    pub(crate) blacklist: Option<Vec<Id>>,
     #[doc(hidden)]
-    pub id: Id,
-    #[doc(hidden)]
-    pub name: &'help str,
-    #[doc(hidden)]
-    pub help: Option<&'help str>,
-    #[doc(hidden)]
-    pub long_help: Option<&'help str>,
-    #[doc(hidden)]
-    pub blacklist: Option<Vec<Id>>,
-    #[doc(hidden)]
-    pub settings: ArgFlags,
+    pub(crate) settings: ArgFlags,
     #[doc(hidden)]
     pub r_unless: Option<Vec<Id>>,
     #[doc(hidden)]
@@ -121,15 +120,6 @@ pub struct Arg<'help> {
 }
 
 impl<'help> Arg<'help> {
-    /// @TODO @p2 @docs @v3-beta1: Write Docs
-    pub fn new<T: Key>(t: T) -> Self {
-        Arg {
-            id: t.key(),
-            disp_ord: 999,
-            unified_ord: 999,
-            ..Default::default()
-        }
-    }
     /// Creates a new instance of [`Arg`] using a unique string name. The name will be used to get
     /// information about whether or not the argument was used at runtime, get values, set
     /// relationships with other args, etc..
@@ -817,7 +807,7 @@ impl<'help> Arg<'help> {
     /// assert!(res.is_err());
     /// assert_eq!(res.unwrap_err().kind, ErrorKind::ArgumentConflict);
     /// ```
-    ///     
+    ///
     /// [`Arg::conflicts_with_all(names)`]: ./struct.Arg.html#method.conflicts_with_all
     /// [`Arg::exclusive(true)`]: ./struct.Arg.html#method.exclusive
 
@@ -4066,14 +4056,22 @@ impl<'help> Arg<'help> {
         self
     }
 
-    #[doc(hidden)]
-    pub fn _build(&mut self) {
+    /// Make a viewer for this arg, see [`view`].
+    pub fn view<'arg>(&'arg self) -> ArgView<'arg, 'help> {
+        ArgView::from_ref(self)
+    }
+}
+
+// NOT PUBLIC API, SUBJECT TO CHANGE AND DISAPPEAR DISREGARDING SEMVER
+impl<'help> Arg<'help> {
+    pub(crate) fn _build(&mut self) {
         if (self.is_set(ArgSettings::UseValueDelimiter)
             || self.is_set(ArgSettings::RequireDelimiter))
             && self.val_delim.is_none()
         {
             self.val_delim = Some(',');
         }
+
         if self.index.is_some() || (self.short.is_none() && self.long.is_none()) {
             if self.max_vals.is_some()
                 || self.min_vals.is_some()
@@ -4091,31 +4089,23 @@ impl<'help> Arg<'help> {
         }
     }
 
-    // @TODO @p6 @naming @internal: rename to set_mut
-    #[doc(hidden)]
-    pub fn setb(&mut self, s: ArgSettings) {
+    pub(crate) fn setb(&mut self, s: ArgSettings) {
         self.settings.set(s);
     }
 
-    // @TODO @p6 @naming @internal: rename to unset_mut
-    #[doc(hidden)]
-    pub fn unsetb(&mut self, s: ArgSettings) {
+    pub(crate) fn unsetb(&mut self, s: ArgSettings) {
         self.settings.unset(s);
     }
 
-    #[doc(hidden)]
-    pub fn has_switch(&self) -> bool {
+    pub(crate) fn has_switch(&self) -> bool {
         self.short.is_some() || self.long.is_some()
     }
 
-    #[doc(hidden)]
-    pub fn longest_filter(&self) -> bool {
+    pub(crate) fn longest_filter(&self) -> bool {
         self.is_set(ArgSettings::TakesValue) || self.long.is_some() || self.short.is_none()
     }
 
-    // Used for positionals when printing
-    #[doc(hidden)]
-    pub fn multiple_str(&self) -> &str {
+    pub(crate) fn multiple_str(&self) -> &str {
         let mult_vals = self
             .val_names
             .as_ref()
@@ -4130,9 +4120,7 @@ impl<'help> Arg<'help> {
         }
     }
 
-    // Used for positionals when printing
-    #[doc(hidden)]
-    pub fn name_no_brackets(&self) -> Cow<str> {
+    pub(crate) fn name_no_brackets(&self) -> Cow<str> {
         debugln!("PosBuilder::name_no_brackets:{}", self.name);
         let mut delim = String::new();
         delim.push(if self.is_set(ArgSettings::RequireDelimiter) {

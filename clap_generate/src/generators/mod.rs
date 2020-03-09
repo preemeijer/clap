@@ -177,9 +177,9 @@ pub trait Generator {
     fn flags<'b>(p: &'b App<'b>) -> Vec<Arg> {
         debugln!("flags: name={}", p.name);
 
-        let mut flags: Vec<_> = flags!(p).cloned().collect();
+        let mut flags: Vec<_> = p.view().flags().cloned().collect();
 
-        if flags.iter().find(|x| x.name == "help").is_none() {
+        if flags.iter().find(|x| x.view().name() == "help").is_none() {
             flags.push(
                 Arg::with_name("help")
                     .short('h')
@@ -189,7 +189,10 @@ pub trait Generator {
         }
 
         if !p.is_set(AppSettings::DisableVersion)
-            && flags.iter().find(|x| x.name == "version").is_none()
+            && flags
+                .iter()
+                .find(|x| x.view().name() == "version")
+                .is_none()
         {
             flags.push(
                 Arg::with_name("version")

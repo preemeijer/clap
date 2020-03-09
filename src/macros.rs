@@ -922,31 +922,22 @@ macro_rules! write_nspaces {
 
 #[macro_export]
 #[doc(hidden)]
-macro_rules! flags {
-    ($app:expr, $how:ident) => {{
-        $app.args
-            .args
-            .$how()
-            .filter(|a| !a.settings.is_set($crate::ArgSettings::TakesValue) && a.index.is_none())
-            .filter(|a| !a.help_heading.is_some())
-    }};
+macro_rules! opts {
     ($app:expr) => {
-        $crate::flags!($app, iter)
+        $app.view()
+            .args()
+            .filter(|a| a.is_set($crate::ArgSettings::TakesValue) && !a.view().index().is_some())
+            .filter(|a| !a.view().help_heading().is_some())
     };
 }
 
-#[macro_export]
-#[doc(hidden)]
-macro_rules! opts {
-    ($app:expr, $how:ident) => {{
-        $app.args
-            .args
-            .$how()
-            .filter(|a| a.settings.is_set($crate::ArgSettings::TakesValue) && a.index.is_none())
-            .filter(|a| !a.help_heading.is_some())
-    }};
+#[allow(unused_macros)]
+macro_rules! opts_mut {
     ($app:expr) => {
-        opts!($app, iter)
+        $app.view()
+            .args_mut()
+            .filter(|a| a.is_set($crate::ArgSettings::TakesValue) && !a.has_index())
+            .filter(|a| !a.has_help_heading())
     };
 }
 

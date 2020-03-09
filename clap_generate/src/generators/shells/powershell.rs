@@ -86,7 +86,7 @@ fn generate_inner<'b>(
 
     for option in opts!(p) {
         if let Some(data) = option.short {
-            let tooltip = get_tooltip(option.help, data);
+            let tooltip = get_tooltip(option.view().help(), data);
 
             completions.push_str(&preamble);
             completions.push_str(
@@ -99,7 +99,7 @@ fn generate_inner<'b>(
         }
 
         if let Some(data) = option.long {
-            let tooltip = get_tooltip(option.help, data);
+            let tooltip = get_tooltip(option.view().help(), data);
 
             completions.push_str(&preamble);
             completions.push_str(
@@ -114,7 +114,7 @@ fn generate_inner<'b>(
 
     for flag in PowerShell::flags(p) {
         if let Some(data) = flag.short {
-            let tooltip = get_tooltip(flag.help, data);
+            let tooltip = get_tooltip(flag.view().help(), data);
 
             completions.push_str(&preamble);
             completions.push_str(
@@ -127,7 +127,7 @@ fn generate_inner<'b>(
         }
 
         if let Some(data) = flag.long {
-            let tooltip = get_tooltip(flag.help, data);
+            let tooltip = get_tooltip(flag.view().help(), data);
 
             completions.push_str(&preamble);
             completions.push_str(
