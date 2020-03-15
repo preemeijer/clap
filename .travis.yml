@@ -55,7 +55,7 @@ jobs:
             - zlib1g-dev
           update: true
       before_script:
-        - cargo install cargo-tarpaulin
+        - cargo install cargo-tarpaulin --git https://github.com/xd009642/tarpaulin --branch develop
       script:
         - cargo tarpaulin --workspace --features "yaml unstable" --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
 script:

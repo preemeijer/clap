@@ -12,8 +12,6 @@
 // commit#ea76fa1b1b273e65e3b0b1046643715b49bec51f which is licensed under the
 // MIT/Apache 2.0 license.
 
-use std::env;
-
 use proc_macro2::TokenStream;
 use proc_macro_error::abort;
 use quote::{quote, quote_spanned};
@@ -56,7 +54,7 @@ pub fn gen_for_struct(
 }
 
 pub fn gen_for_enum(name: &syn::Ident) -> TokenStream {
-    let app_name = env::var("CARGO_PKG_NAME").ok().unwrap_or_default();
+    let app_name = option_env!("CARGO_PKG_NAME").unwrap_or_default();
 
     quote! {
         #[allow(dead_code, unreachable_code, unused_variables)]
@@ -86,7 +84,7 @@ pub fn gen_for_enum(name: &syn::Ident) -> TokenStream {
 }
 
 fn gen_into_app_fn(attrs: &[syn::Attribute]) -> GenOutput {
-    let app_name = env::var("CARGO_PKG_NAME").ok().unwrap_or_default();
+    let app_name = option_env!("CARGO_PKG_NAME").unwrap_or_default();
 
     let attrs = Attrs::from_struct(
         proc_macro2::Span::call_site(),
